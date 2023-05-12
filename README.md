@@ -1,2 +1,2 @@
 # sarcoidosis_project
-scRNA-seq analysis
+scRNA-seq analysis of macrophages in heart sarcoidosis
