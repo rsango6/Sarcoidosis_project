@@ -4,6 +4,8 @@
 #Part 2: Quality control and exploratory analysis 
 #We will now check the quality of the data further:
 
+
+
 # 1. Mapping quality
 # 2. Cell counts
 # 3. Distribution of keys quality metrics
