@@ -357,6 +357,7 @@ sce.filtered <- addPerCellQC(sce.filtered, BPPARAM = bp.params)
 
 colData(sce.filtered) #27113 cells instead of 31326
 
+
 #Mitochondrial content versus library size
 #A useful diagnostic plot for assessing the impact of the filtering is to do a 
 #scatter plot of the mitochondrial content against the library size. We can 
@@ -388,19 +389,19 @@ plotColData(sce,
 #mean - the mean UMI count for the gene across all cells
 #detected - the percentage of cells in which the gene was detected
 
-sce <- addPerFeatureQC(sce, BPPARAM = bp.params)
-rowData(sce)
+sce.filtered <- addPerFeatureQC(sce.filtered, BPPARAM = bp.params)
+rowData(sce.filtered)
 
 #Now we can calculate sparsity using the “detected” columns in the colData and the rowData.
 
-colData(sce)$cell_sparsity <- 1 - (colData(sce)$detected / nrow(sce))
-rowData(sce)$gene_sparsity <- (100 - rowData(sce)$detected) / 100
+colData(sce.filtered)$cell_sparsity <- 1 - (colData(sce.filtered)$detected / nrow(sce.filtered))
+rowData(sce.filtered)$gene_sparsity <- (100 - rowData(sce.filtered)$detected) / 100
 
 #The cell sparsity plot shows that most cells have between 85% and 99% 0’s, which is typical.
-hist(sce$cell_sparsity, breaks=50, col="grey80", xlab="Cell sparsity", main="")
+hist(sce.filtered$cell_sparsity, breaks=50, col="grey80", xlab="Cell sparsity", main="")
 
 #The gene sparsity plot shows that a large number of genes are almost never detected, which is also regularly observed.
-hist(rowData(sce)$gene_sparsity, breaks=50, col="grey80", xlab="Gene sparsity", main="")
+hist(rowData(sce.filtered)$gene_sparsity, breaks=50, col="grey80", xlab="Gene sparsity", main="")
 
 #Filter by sparsity
 #We could remove cells with sparsity higher than 0.99, and/or mitochondrial content higher than 10%.
@@ -408,36 +409,31 @@ hist(rowData(sce)$gene_sparsity, breaks=50, col="grey80", xlab="Gene sparsity", 
 #Genes detected in a few cells only are unlikely to be informative and would hinder 
 #normalization. We will remove genes that are expressed in fewer than 20 cells.
 
-sparse.cells <- sce$cell_sparsity > 0.99
-mito.cells <- sce$subsets_Mito_percent > 10
+sparse.cells <- sce.filtered$cell_sparsity > 0.99 #all FALSE, meaning all cells from prev. filtering step have sparsity less this
+mito.cells <- sce.filtered$subsets_Mito_percent > 10 # NULL since that is already filtered in the previous step
 
-min.cells <- 1 - (20 / ncol(sce))
-sparse.genes <- rowData(sce)$gene_sparsity > min.cells
+min.cells <- 1 - (20 / ncol(sce.filtered))
+sparse.genes <- rowData(sce.filtered)$gene_sparsity > min.cells
 
 #Number of genes removed:
 
 table(sparse.genes)
 
 ## FALSE  TRUE 
-## 18355  6998
+## 18202  7151
 
 
 #Number of cells removed:
 
-table(sparse.cells, mito.cells)
-
-##              mito.cells
-## sparse.cells FALSE  TRUE
-##         FALSE 28230  1938
-##         TRUE     82  1076
+table(sparse.cells)
+table(mito.cells)
 
 sum(sparse.genes)
-sce <- sce[!sparse.genes, ]
+sce.filtered <- sce.filtered[!sparse.genes, ]
 
-rowData(sce) #18355, additional 6998 genes were filtered out bc they have high sparsity
+rowData(sce.filtered) #18202, additional 7151 genes were filtered out bc they have high sparsity
+colData(sce.filtered) #27113 cells
 
 #save sce object for next step: 03_Normalization
 
-saveRDS(sce, "../results/Caron_filtered_genes.rds")
-
-
+saveRDS(sce, paste0(path,"/results/Sarcoidosis_filtered_genes.rds"))
