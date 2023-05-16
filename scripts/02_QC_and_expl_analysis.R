@@ -436,4 +436,4 @@ colData(sce.filtered) #27113 cells
 
 #save sce object for next step: 03_Normalization
 
-saveRDS(sce, paste0(path,"/results/Sarcoidosis_filtered_genes.rds"))
+saveRDS(sce.filtered, paste0(path,"/results/Sarcoidosis_filtered_genes.rds"))
