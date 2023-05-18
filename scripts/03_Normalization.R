@@ -39,7 +39,7 @@ colData(sce) %>%
   # (could do with SampleName only but we would miss SampleId, SampleGroup later)
   group_by(SampleName, Phenotype) %>%
   # count cells for each group
-  summarise(nbCells=n()) %>%
+  summarise(nCells=n()) %>%
   # display output table
   DT::datatable(rownames = FALSE,
                 options = list(dom="tpl", pageLength = 15))

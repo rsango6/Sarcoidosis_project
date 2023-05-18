@@ -232,5 +232,5 @@ ggcells(sce, aes(x = UMAP_neighbors50.1, y = UMAP_neighbors50.2,
                  colour = SampleName)) +
   geom_point()
 
-saveRDS(sce, paste0(path, "/results/sarcoidosis_postDeconv_dimRed.Rds"))
+saveRDS(sce, paste0(path, "/results/sarcoidosis_postSct_dimRed.Rds"))
 
