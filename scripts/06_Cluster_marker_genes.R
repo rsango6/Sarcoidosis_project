@@ -79,56 +79,11 @@ plotTSNE(sce,
          text_by = "louvain", 
          by_exprs_values = "sctrans_norm")
 
-# visualise the expression of the gene on the uncorrected values
-plotExpression(sce, 
-               features = "Cst3", 
-               x = "louvain")
-plotExpression(sce, 
-               features = "Hba-a1", #not a marker bc uninteresting LFC
-               x = "louvain")
-
-
-# modify the previous call to findMarkers to focus on genes that are up-regulated
-markers_up <- findMarkers(
-  sce, 
-  groups = factor(sce$louvain), # clusters to compare
-  block = sce$Phenotype,    # covariates in statistical model
-  test.type = "t",   # t-test (default)
-  direction = "up", # test for up-regulated genes only
-  lfc = 0, # null hypothesis log-fold-change = 0 (default)
-  pval.type = "any" # ranking of p-values based on any comparison (default)
-)
-
-c8_markers_up <- markers_up[[8]]
-rownames(c8_markers_up)[c8_markers_up$Top <= 3]
-
 # [1] "Fcer1g"   "Arhgap15" "Cst3"     "Ctss"     "Lyn"      "Gimap6"   "Tmsb10"   "Ifitm3"   "Ets1"    
 # [10] "Gpx1"     "Rpsa"     "Actg1"    "Nr4a1"    "H2-Ab1"   "Ptprcap"  "Malat1"   "Cytip"    "Mbnl1"   
 # [19] "Klf4"     "Cd52"     "Tyrobp"   "Mir142hg" "Rpl10a"   "H2-Aa"    "Ablim1"   "S100a10"  "Bach2"   
 # [28] "Dennd4a"  "Psap"     "Srgn"     "Fyb"      "Rpl3"     "Pcbp2"    "H2-Eb1"  
 
-c8_markers_up["Hba-a1", ]
-
-
-#These two settings yield a more focused set of candidate 
-#marker genes that are up-regulated in cluster 8.
-
-
-# testing for the alternative hypothesis that LFC > 1
-markers_up_lfc1 <- findMarkers(
-  sce, 
-  groups = factor(sce$louvain), # clusters to compare
-  block = sce$Phenotype,    # covariates in statistical model
-  test.type = "t",   # t-test (default)
-  direction = "up", # test for up-regulated genes only
-  lfc = 1, # null hypothesis log-fold-change = 1
-  pval.type = "any" # ranking of p-values based on any comparison (default)
-)
-
-
-# fetching top markers for cluster 8
-c8_markers_up_lfc1 <- markers_up_lfc1[[8]]
-c8_markers_up_lfc1[c8_markers_up_lfc1$Top <= 3, ]
 
 #Finding cluster-specific markers
 #By default, findMarkers() will give a high ranking to genes that are 
@@ -136,13 +91,6 @@ c8_markers_up_lfc1[c8_markers_up_lfc1$Top <= 3, ]
 #a gene only needs a very low p-value in a single pairwise comparison
 #to achieve a low Top value.
 
-
-#Take the Cst3 gene, which does seem indeed more highly expressed
-#in cluster 8, but only compared to a couple of other clusters (7 and maybe 9).
-
-#While this gene is partially contributing to the distinction
-#between clusters, it is not the most diagnostic gene for cluster
-#8 (if that is what we were interested in).
 
 #A more stringent approach would only consider genes that are
 #differentially expressed in all pairwise comparisons involving
@@ -163,51 +111,85 @@ markers_up_all <- findMarkers(
   pval.type = "all" # ranking of p-values based on all comparisons
 )
 
-
 #In this case, the resulting tables do not include a 
 #Top column any more, as the ranking is simply based
 #on the maximum p-value observed across all comparisons.
 #The table is now simply ranked from low-to-high p-value.
 
-# fetching top markers for cluster 8
-c8_markers_up_all <- markers_up_all[[8]]
-c8_markers_up_all[1:10, ]
+# pick clusters: 6, 7, 10, 18, 19, 21, 22 (based on )
 
-plotExpression(sce, 
-               features = "Cst3",
-               
-               x = "louvain")
-
-plotTSNE(sce, colour_by = "Fabp5", 
-         text_by = "louvain", 
-         by_exprs_values = "sctrans_norm")
-
-plotTSNE(sce, colour_by = "S100a9", 
-         text_by = "louvain", 
-         by_exprs_values = "sctrans_norm")
-
-# select some top genes for cluster 8
-c8_top10 <- c8_markers_up_all[c8_markers_up_all$p.value <= 1e-2, ]
-
-
-# Alternative testing strategies ----
-
-# Wilcoxon rank-sum test
-markers_wilcox_up <- findMarkers(
-  sce, 
-  groups = sce$louvain, # clusters to compare
-  block = sce$Phenotype,    # covariates in statistical model
-  test.type = "wilcox",   # t-test (default)
-  direction = "up",
-  pval.type = "all"
-)
-
-rownames(markers_wilcox_up[[22]])[1:50]
-
-plotTSNE(sce, colour_by = "Lgals3", 
-         text_by = "louvain", 
-         by_exprs_values = "sctrans_norm")
+c10 = markers_up_all[[10]]
+c22 = markers_up_all[[22]]
+c18 = markers_up_all[[18]]
+c7 = markers_up_all[[7]]
+c2 = markers_up_all[[2]]
+c21 = markers_up_all[[21]]
+c11 = markers_up_all[[11]]
+c20 = markers_up_all[[20]]
+c13 = markers_up_all[[13]]
+c16 = markers_up_all[[16]]
+c14 = markers_up_all[[14]]
 
 
 
+process_clusters = function(c) {
+  c = c %>%
+    as.data.frame() %>%
+    dplyr::arrange(desc(summary.logFC)) %>%
+    dplyr::select(c(1:3)) %>%
+    dplyr::top_n(20)
+  
+}
+
+c10 = process_clusters(c10) # Lef1, Tcf7
+c22 = process_clusters(c22) #Fabp5, Fth1, Ftl1, Lgals3, Cstb, S100a1, Atp6v0c, Gpnmb
+c18 = process_clusters(c18) #Ccl5, Gzmk
+c7 = process_clusters(c7)  #Ctsc, Rbpj, Mrc1, C1qa, Psd3, Dab2, Pf4, (Pid1?)
+c2 = process_clusters(c2) #Ccl4, Ccl3, Il6, Mcpt8
+c21 = process_clusters(c21) #Tpsb2, Cpa3, Mcpt4, Cma1
+c11 = process_clusters(c11) #S100a9, S100a8, Cd44, Mcl1, Retnlg, Il1b, Srgn, Slpi, Csf3r, Clec4d
+c20 = process_clusters(c20) #Fabp4, Ly6c1, Flt1, Cavin2, Cav1
+c13 = process_clusters(c13) #Gzma, Klrb1c, Ncr1
+c16 = process_clusters(c16) #Lyz2, Fn1, Plcb1
+c14 = process_clusters(c14) #Dcn, Gsn, Mgp, Igfbp7, C3, Serping1, Fbln1, Col3a1, Clec3b, Lum
+
+clusters_list = list(c10, c22, c18,
+                     c7, c2, c21, 
+                     c11, c20, c13,
+                     c16, c14)
+names(clusters_list) = paste0("c", c(10, 22, 18,
+                                     7, 2, 21, 
+                                     11, 20, 13,
+                                     16, 14))
+
+for (i in 1:length(clusters_list)) {
+  setwd("/scratch/cube/sango/sarcoidosis_project/results")
+  write.csv(clusters_list[[i]], paste0(names(clusters_list)[i], ".csv"))
+  
+}
+
+top20genes_postSct = read.csv(paste0(path, "/results/03_transformed_top_20_genes.csv"))
+
+quick_tsne = function(gene) {
+  plotTSNE(sce, 
+           by_exprs_values = "sctrans_norm",
+           colour_by = gene,
+           text_by = "louvain") +
+    ggtitle(gene)
+}
+
+top20genes_tsne = list()
+
+for (i in 1:length(top20genes_postSct$Symbol)) {
+  top20genes_tsne[[i]] = quick_tsne(top20genes_postSct$Symbol[i])
+}
+names(top20genes_tsne) = top20genes_postSct$Symbol
+
+for (i in names(top20genes_tsne)) {
+  setwd("/scratch/cube/sango/sarcoidosis_project/Plots/06_ClusterMarkerGenes")
+  
+  ggsave(filename = paste("TSNE", i, ".pdf", sep = "_"), plot = top20genes_tsne[[i]],
+         device = "pdf", width = 8, height = 8, units = "in")
+  
+}
                                                                 

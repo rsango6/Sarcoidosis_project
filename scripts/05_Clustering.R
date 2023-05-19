@@ -518,7 +518,8 @@ p + facet_wrap(~ sce$Phenotype)
 
 
 cluToUse <- "louvain"
-plotTSNE(sce, colour_by = cluToUse) +
+plotTSNE(sce, colour_by = cluToUse,
+         text_by = "louvain") +
   ggtitle("louvain clusters")
 
 
@@ -565,7 +566,7 @@ gridExtra::grid.arrange(p1, p2, ncol=2)
 markGenesFull <- list(
   "Naive CD4+ T cells"=c("Il7r", "Ccr7"),
   "Memory CD4+ T cells"=c("Il7r", "S100a4"),
-  "B cells"=c("Ms4a1"),
+  "B cells"=c("Ms4a1", "Cd79a"),
   "CD8+ T cells"=c("Cd8a"),
   "NK cells"=c("Nkg7"),
   "CD14+ Monocytes"=c("Cd14", "Lyz1"),
@@ -586,7 +587,6 @@ plotExpression2 <- function(sce, ctx, markGenesAvail) {
                    features=markGenesAvail[[ctx]]) + ggtitle(ctx)
   }
 }
-
 
 # Naive CD4+ T
 ctx <- "Naive CD4+ T cells"
@@ -624,6 +624,23 @@ plotExpression2(sce, ctx, markGenesAvail)
 ctx <- "Platelets"
 plotExpression2(sce, ctx, markGenesAvail)
 
+quick_tsne = function(gene, cells) {
+  plotTSNE(sce, 
+           by_exprs_values = "sctrans_norm",
+           colour_by = gene,
+           text_by = "louvain") +
+    ggtitle(paste(gene, cells, sep = " - "))
+}
+
+KnownMarkGenesListTSNE = list()
+for (i in 1:length(unlist(markGenesAvail))) {
+  KnownMarkGenesListTSNE[[i]] = quick_tsne(unlist(markGenesAvail)[i],
+                                           names(unlist(markGenesAvail)[i]))
+}
+
+names(KnownMarkGenesListTSNE) = unlist(markGenesAvail)
+
+quick_tsne('Lyz2', 'general Myeloid marker')
 
 saveRDS(sce, file=paste0(path, "/results/sarcoidosis_postSct_clust.Rds"))
 
