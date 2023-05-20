@@ -42,6 +42,8 @@ summed <- aggregateAcrossCells(sce,
 )
 colData(summed) %>% head(3)
 
+write.csv(colData(summed), "nCellsPerSampleAndCluster.csv")
+
 #1.3.2 Performing the DE analysis
 #1.3.2.1 Introduction
 #The DE analysis will be performed using quasi-likelihood (QL)
@@ -273,7 +275,7 @@ summarizeTestsPerLabel(is.de)
 
 # Upregulated across most cell types in Sarcoidosis
 up.de <- is.de > 0 & !is.na(is.de)
-head(sort(rowMeans(up.de), decreasing=TRUE), 10)
+up.de = head(sort(rowMeans(up.de), decreasing=TRUE), 10)
 
 #Plcb4         Fabp5         Itgad 4931431B13Rik        Lgals3         Ier5l         Gpnmb        Abcb1a         Eomes 
 #0.3333333     0.2380952     0.2380952     0.2380952     0.2380952     0.1904762     0.1904762     0.1428571     0.1428571 
@@ -282,9 +284,44 @@ head(sort(rowMeans(up.de), decreasing=TRUE), 10)
 
 # Downregulated across cell types in Sarcoidosis
 down.de <- is.de < 0 & !is.na(is.de)
-head(sort(rowMeans(down.de), decreasing=TRUE), 10)
+down.de = head(sort(rowMeans(down.de), decreasing=TRUE), 10)
 
+comb_up_down = data.frame(Proportions = c(as.vector(up.de), as.vector(down.de)),
+                          Direction = rep(c("Up", "Down"), each = 10))
+comb_up_down$Order = 1:nrow(comb_up_down)
+rownames(comb_up_down) = c(names(up.de), names(down.de))
 
+ggplot(comb_up_down, aes(x=Proportions, y=reorder(rownames(comb_up_down), Order), fill=Direction))+
+  geom_bar(stat="identity", color="black")+
+  scale_fill_brewer(palette="Dark2") +
+  theme_bw() +
+  labs(y = NULL, title = "Upreg & downreg DEGs across all cell types in Sarcoidosis") +
+  theme(axis.text = element_text(face = 'bold',
+                                 size = 12))
+
+df = de.results@listData[["1"]]
+
+df[!is.na(df),]
+
+df = df %>% na.omit(df)
+
+de.results@listData[["1"]]
+
+df = df[df$FDR < 0.05, ]
+
+de_results = list()
+
+for (i in 1:length(de.results@listData)) {
+  de_results[[i]] = de.results@listData[[i]]
+  de_results[[i]] = de_results[[i]] %>% na.omit(de_results[[i]])
+  de_results[[i]] = de_results[[i]][de_results[[i]]$FDR < 0.05, ]
+
+  de_results[[i]] = de_results[[i]][order(de_results[[i]]$FDR),]
+  
+  names(de_results)[i] = names(de.results@listData)[i]
+  setwd("/scratch/cube/sango/sarcoidosis_project/results/07_DiffExprAbnd")
+  write.csv(de_results[[i]], paste0("Cluster", names(de_results)[i], ".csv"))
+}
 #We further identify label-specific DE genes that are significant
 #in our label of interest yet not DE in any other label. As hypothesis
 #tests are not typically geared towards identifying genes that are not
@@ -295,8 +332,29 @@ head(sort(rowMeans(down.de), decreasing=TRUE), 10)
 remotely.de <- decideTestsPerLabel(de.results, threshold=0.5)
 not.de <- remotely.de==0 | is.na(remotely.de)
 
+
+ClusterSpecificDEGs <- list()
+
+for (i in 1:length(colnames(is.de))) {
+  
+  cx <- colnames(is.de)[i]
+  other.labels <- setdiff(colnames(not.de), cx)
+  unique.degs <- is.de[,cx]!=0 & rowMeans(not.de[,other.labels])==1
+  unique.degs <- names(which(unique.degs))
+  
+  
+  ClusterSpecificDEGs[[i]] <- de.results[[cx]]
+  ClusterSpecificDEGs[[i]] <- ClusterSpecificDEGs[[i]][order(ClusterSpecificDEGs[[i]]$PValue),]
+  ClusterSpecificDEGs[[i]] <- ClusterSpecificDEGs[[i]][rownames(ClusterSpecificDEGs[[i]]) %in% unique.degs,]
+  
+  setwd("/scratch/cube/sango/sarcoidosis_project/results/07_DiffExprAbnd")
+  write.csv(ClusterSpecificDEGs[[i]], paste0(names(ClusterSpecificDEGs)[i], ".csv"))  
+}
+
+names(ClusterSpecificDEGs) = paste0("Cluster", colnames(is.de))
+
 # first cluster in is.de
-cx <- colnames(is.de)[2]
+cx <- colnames(is.de)[1]
 cx
 
 
