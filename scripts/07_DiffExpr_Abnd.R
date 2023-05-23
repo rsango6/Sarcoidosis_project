@@ -4,6 +4,10 @@
 library(edgeR)
 library(ggplot2)
 
+path = "/scratch/cube/sango/sarcoidosis_project"
+sce <- readRDS(paste0(path, "/results/sarcoidosis_postSct_clust.Rds"))
+
+
 colLabels(sce) <- sce$louvain
 tab <- table(colLabels(sce), sce$Phenotype)
 tab

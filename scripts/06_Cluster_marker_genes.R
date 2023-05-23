@@ -132,12 +132,28 @@ c14 = markers_up_all[[14]]
 
 
 
+cluster_list = list()
+
 process_clusters = function(c) {
   c = c %>%
     as.data.frame() %>%
     dplyr::arrange(desc(summary.logFC)) %>%
     dplyr::select(c(1:3)) %>%
-    dplyr::top_n(20)
+    dplyr::mutate(Gene = rownames(c)) #%>%
+    #dplyr::top_n(20)
+  
+}
+
+for (i in 1:length(markers_up_all)) {
+  
+  cluster_list[[i]] = markers_up_all[[i]]
+  
+  cluster_list[[i]] = process_clusters(cluster_list[[i]])
+  
+  names(cluster_list)[i] = paste0("Cluster", i)
+  
+  #setwd("/scratch/cube/sango/sarcoidosis_project/results")
+  #write.csv(cluster_list[[i]], paste0(names(cluster_list)[i], ".csv"))
   
 }
 
@@ -152,21 +168,6 @@ c20 = process_clusters(c20) #Fabp4, Ly6c1, Flt1, Cavin2, Cav1
 c13 = process_clusters(c13) #Gzma, Klrb1c, Ncr1
 c16 = process_clusters(c16) #Lyz2, Fn1, Plcb1
 c14 = process_clusters(c14) #Dcn, Gsn, Mgp, Igfbp7, C3, Serping1, Fbln1, Col3a1, Clec3b, Lum
-
-clusters_list = list(c10, c22, c18,
-                     c7, c2, c21, 
-                     c11, c20, c13,
-                     c16, c14)
-names(clusters_list) = paste0("c", c(10, 22, 18,
-                                     7, 2, 21, 
-                                     11, 20, 13,
-                                     16, 14))
-
-for (i in 1:length(clusters_list)) {
-  setwd("/scratch/cube/sango/sarcoidosis_project/results")
-  write.csv(clusters_list[[i]], paste0(names(clusters_list)[i], ".csv"))
-  
-}
 
 top20genes_postSct = read.csv(paste0(path, "/results/03_transformed_top_20_genes.csv"))
 
@@ -192,4 +193,12 @@ for (i in names(top20genes_tsne)) {
          device = "pdf", width = 8, height = 8, units = "in")
   
 }
+
+quick_tsne('Fabp5')
+  
+  
+  
+  
+  
+
                                                                 
